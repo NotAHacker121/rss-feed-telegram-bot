@@ -19,6 +19,7 @@ try:
     str_session = os.environ.get("STR_SESSION")    #String session generate using your tg mobile number for sending mirror cmd on your behalf. Generate using python gen_str.py
     mirr_chat = int(os.environ.get("MIRROR_CHAT_ID"))    #Group/chat_id of mirror chat or mirror bot to send mirror cmd
     mirr_cmd = os.environ.get("MIRROR_CMD", "/mirror")    #if you have changed default cmd of mirror bot, replace this.
+    ignored_strings = list(set(j for j in os.environ["AVOID"].split("|")))
 except Exception as e:
     print(e)
     print("One or more variables missing or have error. Exiting !")
@@ -41,22 +42,31 @@ def create_feed_checker(feed_url):
         if len(FEED.entries) == 0:
             return
         entry = FEED.entries[0]
+        
+        isItIgnored = None
+        for k in ignored_strings:
+            if k in entry.title:
+                isItIgnored = 1
+                break
+                
         if entry.id != db.get_link(feed_url).link:
-                       # ↓ Edit this message as your needs.
-            message = f"**{entry.title}**\n```{entry.link}```"
-            try:
-                app.send_message(log_channel, message)
-                if app2 is not None:
-                    mirr_msg = f"{mirr_cmd} {entry.link}"
-                    app2.send_message(mirr_chat, mirr_msg)
-                db.update_link(feed_url, entry.id)
-            except FloodWait as e:
-                print(f"FloodWait: {e.x} seconds")
-                sleep(e.x)
-            except Exception as e:
-                print(e)
-        else:
-            print(f"Checked RSS FEED: {entry.id}")
+            db.update_link(feed_url, entry.id)
+            
+            if isItIgnored is None:
+                message = f"**{entry.title}**\n```{entry.link}```"
+                try:
+                    app.send_message(log_channel, message)
+                
+                    if app2 is not None:
+                        mirr_msg = f"{mirr_cmd} {entry.link}"
+                        app2.send_message(mirr_chat, mirr_msg)
+                except FloodWait as e:
+                    print(f"FloodWait: {e.x} seconds")
+                    sleep(e.x)
+                except Exception as e:
+                    print(e)
+            else:
+                print(f"Checked RSS FEED: {entry.id}")
     return check_feed
 
 

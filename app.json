@@ -59,6 +59,10 @@
             "value": "",
             "required": false
         },
+        "AVOID": {
+            "description": "Keywords to skip",
+            "value": "",
+            "required": true
         "MIRROR_CMD": {
             "description": "if you have changed default cmd of mirror bot, replace this. Required only if you are using string session to interact with mirror bot.",
             "value": "/mirror",
